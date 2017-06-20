@@ -1,0 +1,14 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pyramid = "==1.8.4"
+pytest = "*"
+fakeredis = "*"
+isort = "*"
+pytest-catchlog = "*"
+pylint = "*"
+
+[packages]
+redis = ">=2.10.0"

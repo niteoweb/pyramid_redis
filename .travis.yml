@@ -1,0 +1,17 @@
+sudo: false
+dist: trusty
+language: python
+python:
+  - "2.7"
+  - "3.5"
+  - "3.6"
+install:
+  - "pip install pipenv"
+  - "pipenv install --dev"
+  - "pip install -e ."
+
+script:
+  - "pylint src/pyramid_redis/"
+  - "pytest --verbose tests/"
+
+cache: pip

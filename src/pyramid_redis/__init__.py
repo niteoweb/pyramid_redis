@@ -1,25 +1,48 @@
 # -*- coding: utf-8 -*-
+"""Provide a Pyramid request factory for redis."""
 
-"""Provide a Pyramid confguration entry point."""
+from __future__ import unicode_literals
 
 import logging
+
+
 logger = logging.getLogger(__name__)
 
-from .config import DEFAULT_SETTINGS
-from .hooks import GetRedisClient
 
-class IncludeMe(object):
-    """Unpack the settings and provide ``request.redis``."""
+def includeme(config):
+    """Factory for Redis pyramid client."""
 
-    def __init__(self, **kwargs):
-        self.default_settings = kwargs.get('default_settings', DEFAULT_SETTINGS)
-        self.get_redis = kwargs.get('get_redis', GetRedisClient())
+    dsn = config.registry.settings.get('redis.dsn')
+    max_connections = config.registry.settings.get('redis.max_connections', 4)
+    redis_client = None
 
-    def __call__(self, config):
-        settings = config.get_settings()
-        for key, value in self.default_settings.items():
-            settings.setdefault(key, value)
-        config.add_request_method(self.get_redis, 'redis', reify=True)
+    is_type = lambda name: dsn.startswith(name+'://')
+    if any(is_type(t) for t in ['redis', 'rediss', 'unix']):
+        from redis import StrictRedis
+
+        redis_client = StrictRedis.from_url(dsn)
+    elif any(is_type(t + '+blocking') for t in ['redis', 'rediss', 'unix']):
+        from redis import BlockingConnectionPool
+        from redis import StrictRedis
+
+        # Strip the +blocking from dns, underlaying client
+        # does not support this scheme.
+        dsn = dsn.replace('+blocking:', ':')
+        pool = BlockingConnectionPool.from_url(
+            dsn, max_connections=max_connections)
+        redis_client = StrictRedis(connection_pool=pool)
+    elif is_type('fakeredis'):
+        from fakeredis import FakeStrictRedis
+
+        redis_client = FakeStrictRedis()
+    else:
+        logger.error(
+            'Redis could not be initialized, DSN %s is not supported!', dsn)
 
 
-includeme = IncludeMe().__call__
+    # Create a request method that'll get the Redis client in each request.
+    config.add_request_method(
+        lambda request: redis_client,
+        name='redis',
+        reify=True,
+    )

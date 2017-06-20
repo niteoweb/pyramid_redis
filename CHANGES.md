@@ -1,3 +1,9 @@
+# 0.2.0
+
+Removes the `turnstile_client_factory`.
+Simplifies the use of redis client in pyramid by relaying on single DSN resource, which
+can configure all cases of that `py-redis` supports.
+
 # 0.1.4
 
 Add `RedisClientConfiguration` class. With it you may configure your client via URL or unix_socket_path.

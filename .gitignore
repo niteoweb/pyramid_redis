@@ -1,0 +1,7 @@
+__pycache__
+src/pyramid_redis.egg-info
+*.pyc
+.cache
+.vscode
+dist
+build
