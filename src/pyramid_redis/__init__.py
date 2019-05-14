@@ -32,9 +32,12 @@ def includeme(config):
             dsn, max_connections=max_connections)
         redis_client = StrictRedis(connection_pool=pool)
     elif is_type('fakeredis'):
-        from fakeredis import FakeStrictRedis
+        import fakeredis
 
-        redis_client = FakeStrictRedis()
+        server = fakeredis.FakeServer()
+        redis_client = fakeredis.FakeStrictRedis(server=server)
+
+        config.registry.settings["fakeredis_server"] = server
     else:
         logger.error(
             'Redis could not be initialized, DSN %s is not supported!', dsn)
